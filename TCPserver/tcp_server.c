@@ -54,7 +54,6 @@ int try_socket() {
     }
     // Close the client socket
 
-    getchar();
     close(client_socket);
 
     // Close the server socket
