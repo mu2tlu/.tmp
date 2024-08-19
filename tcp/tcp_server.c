@@ -63,12 +63,8 @@ int try_socket(char *av)
     }
     
     // Close the client socket
-
     close(client_socket);
 
-    // Close the server socket
-    close(server_socket);
-    
     return 0;
 }
 
