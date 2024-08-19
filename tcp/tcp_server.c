@@ -54,7 +54,7 @@ int try_socket(char *av)
         perror("send failed");
     }
     
-    while (1){
+    while (1) {
         memset(server_message, 0, sizeof(server_message));
         if (recv(client_socket, server_message, sizeof(server_message), 0) == -1) {
             perror("send failed");
