@@ -10,7 +10,6 @@
 
 int try_socket(char *av) 
 {
-
     // Create the server socket
     int server_socket; 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -18,7 +17,10 @@ int try_socket(char *av)
         perror("socket creation failed");
         exit(1);
     }
-    
+
+    int so_reuseaddr_set = 1;
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &so_reuseaddr_set, sizeof(int));
+
     // Define the server address
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
