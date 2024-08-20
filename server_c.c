@@ -1,38 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <fcntl.h>
 
 #define PORT 8080
-#define MAX_CLIENTS 10
+#define BUFFER_SIZE 1024
 
 int main() {
-    int server_socket, client_socket, max_fd, activity, valread;
+    int server_socket, client_socket;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
-    char buffer[1024];
-    int clients[MAX_CLIENTS];
-    fd_set read_fds;
-    int i;
+    char buffer[BUFFER_SIZE];
+    int clients[FD_SETSIZE];
+    int num_clients = 0;
 
-    // Soket oluşturma
+    // Server socket oluşturma
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
 
-    // SO_REUSEADDR seçeneğini ayarlama
     int reuse = 1;
     if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1) {
         perror("setsockopt SO_REUSEADDR");
-        close(server_socket);
-        exit(EXIT_FAILURE);
+        exit(1);
     }
 
     // Server adresini yapılandırma
@@ -49,39 +44,36 @@ int main() {
     }
 
     // Dinlemeye başlama
-    if (listen(server_socket, MAX_CLIENTS) < 0) {
+    if (listen(server_socket, 3) < 0) {
         perror("listen");
         close(server_socket);
         exit(EXIT_FAILURE);
     }
 
-    // Bağlı client'ları sıfırlama
-    memset(clients, 0, sizeof(clients));
+    fd_set read_fds, write_fds;
+    int max_fd = server_socket;
 
     while (1) {
         FD_ZERO(&read_fds);
+        FD_ZERO(&write_fds);
         FD_SET(server_socket, &read_fds);
         FD_SET(STDIN_FILENO, &read_fds);
         max_fd = server_socket;
 
-        // Client socket'ları fd_set'e ekleme
-        for (i = 0; i < MAX_CLIENTS; ++i) {
-            if (clients[i] > 0) {
-                FD_SET(clients[i], &read_fds);
-                if (clients[i] > max_fd) {
-                    max_fd = clients[i];
-                }
-            }
+        for (int i = 0; i < num_clients; ++i) {
+            FD_SET(clients[i], &read_fds);
+            FD_SET(clients[i], &write_fds);
+            if (clients[i] > max_fd) max_fd = clients[i];
         }
 
-        activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
+        int activity = select(max_fd + 1, &read_fds, &write_fds, NULL, NULL);
         if (activity < 0) {
             perror("select error");
             close(server_socket);
             exit(EXIT_FAILURE);
         }
 
-        // Yeni bağlantı varsa
+        // Yeni bir bağlantı var mı?
         if (FD_ISSET(server_socket, &read_fds)) {
             client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &client_len);
             if (client_socket < 0) {
@@ -90,13 +82,11 @@ int main() {
                 exit(EXIT_FAILURE);
             }
             printf("New connection established\n");
-
-            // Yeni client'ı ekleme
-            for (i = 0; i < MAX_CLIENTS; ++i) {
-                if (clients[i] == 0) {
-                    clients[i] = client_socket;
-                    break;
-                }
+            if (num_clients < FD_SETSIZE) {
+                clients[num_clients++] = client_socket;
+            } else {
+                printf("Too many clients\n");
+                close(client_socket);
             }
         }
 
@@ -104,46 +94,55 @@ int main() {
         if (FD_ISSET(STDIN_FILENO, &read_fds)) {
             printf("Enter message to send to all clients: ");
             if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
-                // Mesajın sonuna yeni bir satır karakteri ekleme
+                // Mesajın sonuna yeni bir satır karakteri ekleyin
                 size_t len = strlen(buffer);
-                if (buffer[len - 1] != '\n') {
-                    buffer[len] = '\n';
-                    buffer[len + 1] = '\0';
+                if (len > 0 && buffer[len - 1] == '\n') {
+                    buffer[len - 1] = '\0'; // '\n' karakterini kaldır
                 }
-                for (i = 0; i < MAX_CLIENTS; ++i) {
-                    if (clients[i] > 0) {
-                        if (send(clients[i], buffer, strlen(buffer), 0) == -1) {
-                            perror("send");
-                        }
+                // Mesajı tüm client'lara gönder
+                for (int i = 0; i < num_clients; ++i) {
+                    if (send(clients[i], buffer, strlen(buffer), 0) == -1) {
+                        perror("send");
                     }
                 }
             }
         }
 
         // Client'lardan veri okuma
-        for (i = 0; i < MAX_CLIENTS; ++i) {
-            if (FD_ISSET(clients[i], &read_fds)) {
-                valread = read(clients[i], buffer, sizeof(buffer) - 1);
+        for (int i = 0; i < num_clients; ++i) {
+            int sd = clients[i];
+            if (FD_ISSET(sd, &read_fds)) {
+                int valread = read(sd, buffer, BUFFER_SIZE - 1);
                 if (valread > 0) {
-                    buffer[valread] = '\0';
-                    printf("Received from client: %s", buffer);
+                    buffer[valread] = '\0'; // Null-terminate the buffer
+                    printf("Received from client: %s\n", buffer);
 
-                    // Client'tan gelen veriyi diğer client'lara gönder
-                    for (int j = 0; j < MAX_CLIENTS; ++j) {
-                        if (clients[j] > 0 && clients[j] != clients[i]) {
-                            if (send(clients[j], buffer, strlen(buffer), 0) == -1) {
+                    // Mesajı diğer client'lara gönder
+                    for (int j = 0; j < num_clients; ++j) {
+                        if (clients[j] != sd) {
+                            if (send(clients[j], buffer, valread, 0) == -1) {
                                 perror("send");
                             }
                         }
                     }
                 } else if (valread == 0) {
                     printf("Client disconnected\n");
-                    close(clients[i]);
-                    clients[i] = 0;
+                    close(sd);
+                    // Client'ı listeden çıkar
+                    for (int k = i; k < num_clients - 1; ++k) {
+                        clients[k] = clients[k + 1];
+                    }
+                    --num_clients;
+                    --i; // İndeksi güncelle
                 } else {
                     perror("read error");
-                    close(clients[i]);
-                    clients[i] = 0;
+                    close(sd);
+                    // Client'ı listeden çıkar
+                    for (int k = i; k < num_clients - 1; ++k) {
+                        clients[k] = clients[k + 1];
+                    }
+                    --num_clients;
+                    --i; // İndeksi güncelle
                 }
             }
         }

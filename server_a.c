@@ -1,144 +1,160 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h> 
-#include <sys/types.h>
+#include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <fcntl.h>
+#include <unistd.h>
+#include <cstring>
+#include <vector>
+#include <cstdio>
+#include <fcntl.h>  // fcntl fonksiyonunu kullanabilmek için
 
-#define MAX_CLIENTS 1024
-#define BUFFER_SIZE 300000
+#define PORT 8080
 
-char buf[BUFFER_SIZE];
-int maxfd = 0;
-int i = 0;
+int main() {
+    int server_socket, client_socket;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    char buffer[1024];
+    std::vector<int> clients;
 
-typedef struct s_client {
-    int socketfd;
-    socklen_t len;
-} t_client;
-
-typedef struct s_server {
-    struct sockaddr_in serveraddr;
-    int port;
-    int serversocket;
-    int host;
-    fd_set read_set, write_set, current;
-    t_client clients[MAX_CLIENTS];
-} t_server;
-
-void init_serv(char *port, t_server *server) {
-    int serversocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serversocket == -1) {
-        perror("socket");
-        exit(1);
+    // Server socket oluşturma
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket == -1) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
     }
-    server->serversocket = serversocket;
-    FD_ZERO(&server->current);
-    maxfd = serversocket;
-    FD_SET(serversocket, &server->current);
-    bzero(&server->serveraddr, sizeof(server->serveraddr));
-    server->serveraddr.sin_addr.s_addr = INADDR_ANY;
-    server->serveraddr.sin_port = htons(atoi(port));
-    server->serveraddr.sin_family = AF_INET;
-}
 
-void socket_reuse(t_server *server) {
+    // Non-blocking mod ayarlama
+    int flags = fcntl(server_socket, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl F_GETFL failed");
+        exit(EXIT_FAILURE);
+    }
+    if (fcntl(server_socket, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl O_NONBLOCK failed");
+        exit(EXIT_FAILURE);
+    }
+
     int reuse = 1;
-    if (setsockopt(server->serversocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1) {
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1) {
         perror("setsockopt SO_REUSEADDR");
         exit(1);
     }
-}
 
-void init_nonblock(t_server *server) {
-    if (fcntl(server->serversocket, F_SETFL, O_NONBLOCK) == -1) {
-        perror("fcntl O_NONBLOCK");
-        exit(1);
+    // Server adresini yapılandırma
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(PORT);
+
+    // Adresi bağlama
+    if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+        perror("bind failed");
+        close(server_socket);
+        exit(EXIT_FAILURE);
     }
-}
 
-void bind_serv(t_server *server) {
-    if (bind(server->serversocket, (const struct sockaddr*)&server->serveraddr, sizeof(server->serveraddr)) == -1) {
-        perror("bind");
-        exit(1);
-    }
-}
-
-void listen_serv(t_server *server) {
-    if (listen(server->serversocket, 5) == -1) {
+    // Dinlemeye başlama
+    if (listen(server_socket, 3) < 0) {
         perror("listen");
-        exit(1);
+        close(server_socket);
+        exit(EXIT_FAILURE);
     }
-}
 
-void accept_serv(t_server *server) {
-    int clisock = accept(server->serversocket, (struct sockaddr *)&server->serveraddr, &server->clients[i].len);
-    if (clisock == -1) {
-        perror("accept");
-        return;
-    }
-    server->clients[i].socketfd = clisock;
+    fd_set read_fds, write_fds;
+    int max_fd = server_socket;
 
-    FD_SET(server->clients[i].socketfd, &server->current);
-    if (clisock > maxfd) 
-        maxfd = clisock;
-    i++;
-}
+    while (true) {
+        FD_ZERO(&read_fds);
+        FD_ZERO(&write_fds);
+        FD_SET(server_socket, &read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
+        max_fd = server_socket;
 
-void ft_loop(t_server *server) {
-    while (1) {
-        server->read_set = server->current;
-        server->write_set = server->current;
-        int activity = select(maxfd + 1, &server->read_set, &server->write_set, NULL, NULL);
-        if (activity == -1) {
-            perror("select");
-            exit(1);
+        for (size_t i = 0; i < clients.size(); ++i) {
+            FD_SET(clients[i], &read_fds);
+            FD_SET(clients[i], &write_fds);
+            if (clients[i] > max_fd) max_fd = clients[i];
         }
 
-        for (int fd = 0; fd <= maxfd; fd++) {
-            if (FD_ISSET(fd, &server->read_set)) {
-                if (fd == server->serversocket) {
-                    accept_serv(server);
-                } else {
-                    int ret = recv(fd, buf, sizeof(buf) - 1, 0);
-                    if (ret <= 0) {
-                        if (ret == 0) {
-                            printf("Client disconnected\n");
-                        } else {
-                            perror("recv");
-                        }
-                        close(fd);
-                        FD_CLR(fd, &server->current);
-                    } else {
-                        buf[ret] = '\0';
-                        printf("Received: %s\n", buf);
-                        for (int i = 0; i <= maxfd; i++) {
-                            if (FD_ISSET(i, &server->current) && i != server->serversocket && i != fd) {
-                                if (send(i, buf, ret, 0) == -1) {
-                                    perror("send");
-                                }
-                            }
-                        }
-                    }
+        int activity = select(max_fd + 1, &read_fds, &write_fds, NULL, NULL);
+        if (activity < 0) {
+            perror("select error");
+            close(server_socket);
+            exit(EXIT_FAILURE);
+        }
+
+        // Yeni bir bağlantı var mı?
+        if (FD_ISSET(server_socket, &read_fds)) {
+            client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &client_len);
+            if (client_socket < 0) {
+                perror("accept");
+                close(server_socket);
+                exit(EXIT_FAILURE);
+            }
+
+            // Yeni bağlantı için non-blocking mod ayarlama
+            flags = fcntl(client_socket, F_GETFL, 0);
+            if (flags == -1) {
+                perror("fcntl F_GETFL failed");
+                exit(EXIT_FAILURE);
+            }
+            if (fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) == -1) {
+                perror("fcntl O_NONBLOCK failed");
+                exit(EXIT_FAILURE);
+            }
+
+            std::cout << "New connection established" << std::endl;
+            clients.push_back(client_socket);
+        }
+
+        // Terminalden veri okuma
+        if (FD_ISSET(STDIN_FILENO, &read_fds)) {
+            std::cout << "Enter message to send to all clients: ";
+            std::cin.getline(buffer, sizeof(buffer));
+            // Mesajın sonuna yeni bir satır karakteri ekleyin
+            std::string message = std::string(buffer) + "\n";
+            for (size_t i = 0; i < clients.size(); ++i) {
+                if (send(clients[i], message.c_str(), message.length(), 0) == -1) {
+                    perror("send");
                 }
             }
         }
-    }
-}
 
-int main(int ac, char **av) {
-    if (ac != 2) {
-        fprintf(stderr, "Usage: %s <port>\n", av[0]);
-        exit(1);
+        // Client'lardan veri okuma
+        for (std::vector<int>::iterator it = clients.begin(); it != clients.end(); ) {
+            int sd = *it;
+            if (FD_ISSET(sd, &read_fds)) {
+                int valread = read(sd, buffer, 1024);
+                if (valread > 0) {
+                    buffer[valread] = '\0';
+                    std::cout << "Received from client: " << buffer << std::endl;
+
+                    // Client'tan gelen veriyi diğer client'lara gönder
+                    std::string msg(buffer);
+                    msg += "\n";  // Mesajın sonuna yeni bir satır karakteri ekleyin
+                    for (size_t i = 0; i < clients.size(); ++i) {
+                        if (clients[i] != sd && FD_ISSET(clients[i], &write_fds)) {
+                            if (send(clients[i], msg.c_str(), msg.length(), 0) == -1) {
+                                perror("send");
+                            }
+                        }
+                    }
+                } else if (valread == 0) {
+                    std::cout << "Client disconnected" << std::endl;
+                    close(sd);
+                    it = clients.erase(it);
+                    continue;
+                } else {
+                    perror("read error");
+                    close(sd);
+                    it = clients.erase(it);
+                    continue;
+                }
+            }
+            ++it;
+        }
     }
-    t_server server;
-    memset(&server, 0, sizeof(server));
-    init_serv(av[1], &server);
-    socket_reuse(&server);
-    init_nonblock(&server);
-    bind_serv(&server);
-    listen_serv(&server);
-    ft_loop(&server);
+
+    close(server_socket);
+    return 0;
 }
