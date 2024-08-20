@@ -48,21 +48,23 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    fd_set read_fds;
+    fd_set read_fds, write_fds;
     int max_fd = server_socket;
 
     while (true) {
         FD_ZERO(&read_fds);
+        FD_ZERO(&write_fds);
         FD_SET(server_socket, &read_fds);
         FD_SET(STDIN_FILENO, &read_fds);
         max_fd = server_socket;
 
         for (size_t i = 0; i < clients.size(); ++i) {
             FD_SET(clients[i], &read_fds);
+            FD_SET(clients[i], &write_fds);
             if (clients[i] > max_fd) max_fd = clients[i];
         }
 
-        int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
+        int activity = select(max_fd + 1, &read_fds, &write_fds, NULL, NULL);
         if (activity < 0) {
             perror("select error");
             close(server_socket);
@@ -107,7 +109,7 @@ int main() {
                     std::string msg(buffer);
                     msg += "\n";  // Mesajın sonuna yeni bir satır karakteri ekleyin
                     for (size_t i = 0; i < clients.size(); ++i) {
-                        if (clients[i] != sd) {
+                        if (clients[i] != sd && FD_ISSET(clients[i], &write_fds)) {
                             if (send(clients[i], msg.c_str(), msg.length(), 0) == -1) {
                                 perror("send");
                             }
