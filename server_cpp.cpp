@@ -5,6 +5,7 @@
 #include <cstring>
 #include <vector>
 #include <cstdio>
+#include <fcntl.h>  // fcntl fonksiyonunu kullanabilmek için
 
 #define PORT 8080
 
@@ -19,6 +20,17 @@ int main() {
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
         perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Non-blocking mod ayarlama
+    int flags = fcntl(server_socket, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl F_GETFL failed");
+        exit(EXIT_FAILURE);
+    }
+    if (fcntl(server_socket, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl O_NONBLOCK failed");
         exit(EXIT_FAILURE);
     }
 
@@ -79,6 +91,18 @@ int main() {
                 close(server_socket);
                 exit(EXIT_FAILURE);
             }
+
+            // Yeni bağlantı için non-blocking mod ayarlama
+            flags = fcntl(client_socket, F_GETFL, 0);
+            if (flags == -1) {
+                perror("fcntl F_GETFL failed");
+                exit(EXIT_FAILURE);
+            }
+            if (fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) == -1) {
+                perror("fcntl O_NONBLOCK failed");
+                exit(EXIT_FAILURE);
+            }
+
             std::cout << "New connection established" << std::endl;
             clients.push_back(client_socket);
         }
