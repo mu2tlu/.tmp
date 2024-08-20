@@ -73,7 +73,8 @@ int main() {
         for (size_t i = 0; i < clients.size(); ++i) {
             FD_SET(clients[i], &read_fds);
             FD_SET(clients[i], &write_fds);
-            if (clients[i] > max_fd) max_fd = clients[i];
+            if (clients[i] > max_fd) 
+                max_fd = clients[i];
         }
 
         int activity = select(max_fd + 1, &read_fds, &write_fds, NULL, NULL);
@@ -124,7 +125,7 @@ int main() {
         for (std::vector<int>::iterator it = clients.begin(); it != clients.end(); ) {
             int sd = *it;
             if (FD_ISSET(sd, &read_fds)) {
-                int valread = read(sd, buffer, 1024);
+                int valread = recv(sd, buffer, sizeof(buffer) - 1, 0);
                 if (valread > 0) {
                     buffer[valread] = '\0';
                     std::cout << "Received from client: " << buffer << std::endl;
@@ -145,7 +146,7 @@ int main() {
                     it = clients.erase(it);
                     continue;
                 } else {
-                    perror("read error");
+                    perror("recv error");
                     close(sd);
                     it = clients.erase(it);
                     continue;

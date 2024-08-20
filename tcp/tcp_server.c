@@ -41,61 +41,73 @@ int try_socket(char *av)
         exit(1);
     }
 
-    fd_set *fd_read;
-    FD_ZERO(fd_read);
+    fd_set fd_read;
+    FD_ZERO(&fd_read);
 
-    fd_set *fd_read_sup;
-    FD_ZERO(fd_read_sup);
+    fd_set fd_read_buff;
+    FD_ZERO(&fd_read_buff);
     
-    fd_set *fd_write;
-    FD_ZERO(fd_write);
+    fd_set fd_write;
+    FD_ZERO(&fd_write);
     
-    fd_set *fd_write_sup;
-    FD_ZERO(fd_write_sup);
-
-    FD_SET(server_socket, &fd_read);
-    FD_SET(server_socket, &fd_write);
+    fd_set fd_write_buff;
+    FD_ZERO(&fd_write_buff);
 
 
     // FD_CLR(server_socket, &fd_write);
     int client_socket;
-    char server_message[256] = "You have reached the server!"; 
+    char server_buff[256] = "You have reached the server!"; 
     while (1) 
     {
-        fd_read_sup = fd_read;
-        fd_write_sup = fd_write;
-        int activity = select(server_socket + 1, &fd_read_sup, &fd_write_sup, NULL, NULL);
-        if (activity > 0) {
-            if (FD_ISSET(server_socket, &fd_read)) {
-                memset(server_message, 0, sizeof(server_message));
-                 if (recv(server_socket, server_message, sizeof(server_message), 0) == -1) {
-                    perror("send failed");
-                 }
-            }
-            if (FD_ISSET(server_socket, &fd_write)) {
-                memset(server_message, 0, sizeof(server_message));
-                 int bytesRead = read(server_socket, server_message, sizeof(server_message) - 1);
-                if (bytesRead < 0) {
-                    perror("read");
-                    exit(EXIT_FAILURE);
+        fd_read = fd_read_buff;
+        fd_write = fd_read_buff;
+        int activity = select(server_socket + 1, &fd_read, &fd_write, NULL, NULL);
+        if(activity < 0)
+            perror("select");
+        else 
+            if(activity > 0){
+                if (FD_ISSET(&fd_read, server_socket)) {
+                    memset(server_buff, 0, 256);
+                    recv(server_socket, server_buff,)
                 }
-                write(1, server_message, sizeof(server_message));
             }
-            // Accept a connection
-            client_socket = accept(server_socket, NULL, NULL);
-            if (client_socket == -1) {
-                perror("accept failed");
-                close(server_socket);
-                exit(1);
-            }
-            if (send(client_socket, server_message, sizeof(server_message), 0) == -1) {
-                perror("send failed");
-            }
-            // recv the message
-            if (recv(client_socket, server_message, sizeof(server_message), 0) == -1) {
-                perror("send failed");
-            }
-        }
+            
+
+
+
+
+
+        // if (activity > 0) {
+        //     if (FD_ISSET(server_socket, &fd_read)) {
+        //         memset(server_message, 0, sizeof(server_message));
+        //          if (recv(server_socket, server_message, sizeof(server_message), 0) == -1) {
+        //             perror("send failed");
+        //          }
+        //     }
+        //     if (FD_ISSET(server_socket, &fd_write)) {
+        //         memset(server_message, 0, sizeof(server_message));
+        //          int bytesRead = read(server_socket, server_message, sizeof(server_message) - 1);
+        //         if (bytesRead < 0) {
+        //             perror("read");
+        //             exit(EXIT_FAILURE);
+        //         }
+        //         write(1, server_message, sizeof(server_message));
+        //     }
+        //     // Accept a connection
+        //     client_socket = accept(server_socket, NULL, NULL);
+        //     if (client_socket == -1) {
+        //         perror("accept failed");
+        //         close(server_socket);
+        //         exit(1);
+        //     }
+        //     if (send(client_socket, server_message, sizeof(server_message), 0) == -1) {
+        //         perror("send failed");
+        //     }
+        //     // recv the message
+        //     if (recv(client_socket, server_message, sizeof(server_message), 0) == -1) {
+        //         perror("send failed");
+        //     }
+        // }
     }            
     
     // Close the client socket
