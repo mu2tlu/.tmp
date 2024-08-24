@@ -10,7 +10,6 @@ void	client_read(t_env *e, int cs)
   int	i;
 
   r = recv(cs, e->fds[cs].buf_read, BUF_SIZE, 0);
-    printf("%s", e->fds[cs].buf_read);
   if (r <= 0)
     {
       close(cs);
