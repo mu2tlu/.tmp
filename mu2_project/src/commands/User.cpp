@@ -2,6 +2,7 @@
 
 void User::user(Client *client, const std::vector<std::string> commandParts, Server *srv)
 {
+    (void)srv; //Dikkat
     if (!client->getHasNick())
         return(client->sendMessage(": You must set a nickname before this"));
     if (commandParts.size() < 4)

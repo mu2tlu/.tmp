@@ -1,6 +1,8 @@
 #ifndef FILE_HPP
 #define FILE_HPP
 
+#include <iostream>
+
 class File
 {
 	public:
