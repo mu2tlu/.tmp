@@ -2,7 +2,7 @@ NAME = ircserv
 
 CXX = c++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g
+CXXFLAGS = -Wall -Wextra -Werror -std=c++11 -g
 
 SRCS =	src/main.cpp src/Server.cpp src/Client.cpp src/SignalHandler.cpp src/PollManager.cpp \
 		src/commands/Commands.cpp src/commands/Cap.cpp src/commands/Privmsg.cpp src/commands/Pass.cpp \
