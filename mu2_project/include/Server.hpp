@@ -13,6 +13,7 @@
 #include "../include/ServerException.hpp"
 #include "../include/PollManager.hpp"
 #include "../include/Commands.hpp"
+#include "../include/File.hpp" //mu2
 
 
 #include <string>
@@ -32,7 +33,6 @@
 #include <algorithm> // std::remove için gerekli
 #include "Utils.hpp"
 
-
 class Client;
 class Server {
 
@@ -47,9 +47,8 @@ class Server {
         static const size_t BUFFER_SIZE = 1024;
         //Namelist
         std::vector<std::pair<int, std::string> > _nickList;
+        std::map<int, File> _file; //mu2
 
-
-    
     public:
         Server(int port, const  std::string& password, const std::string& host);
         ~Server();
@@ -61,6 +60,8 @@ class Server {
         bool isNickTaken(const std::string& nick);
         bool registerNick(const std::string& nick, int id);
 
+        //File
+        std::map<int, File> getFile() const; //mu2
 
     private:
         void setPollFd();
@@ -84,8 +85,6 @@ class Server {
         //Message
         bool sendMessage(int clientSocket, const std::string& msg);
         std::string receiveMessage(int clientSocket);
-
-
 };
 
 #endif

@@ -24,10 +24,7 @@ bool Server::authClient(int clientSocket){
         sendMessage(clientSocket, "Invalid Password. Connection Closed!\r\n");
         return false;
     }
-    
-    
-    
-    
+
 }
 
 bool Server::verifyPassword(const std::string& password){
@@ -283,4 +280,8 @@ void Server::closeConnection(int clientSocket){
     } catch (const ServerException& e) {
         std::cerr << "Error in closeConnection: " << e.what() << std::endl;
     }
+}
+
+std::map<int, File> Server::getFile() const {
+    return _file;
 }

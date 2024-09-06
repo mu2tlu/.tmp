@@ -11,7 +11,6 @@
 class Client;
 class Server;
 
-
 class CommandParser
 {
     private:
@@ -75,6 +74,15 @@ class Notice
 		~Notice();
 	public:
         static void notice(Client *client, const std::vector<std::string> commandParts, Server *srv);
+};
+
+class SendF
+{
+	private:
+		SendF();
+		~SendF();
+	public:
+		static void sendFile(Client *client, const std::vector<std::string> commandParts, Server *srv);
 };
 
 

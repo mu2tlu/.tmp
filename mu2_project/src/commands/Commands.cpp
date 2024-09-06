@@ -22,7 +22,7 @@ void CommandParser::commandParser(const char *command, Client *client, Server *s
     {
         return;
     }
-
+    
     commandString.erase(std::remove(commandString.begin(), commandString.end(), '\n'), commandString.end());
     
     std::vector<std::string> commandParts = splitString(commandString, " ");
@@ -58,6 +58,15 @@ void CommandParser::handleCommand(Client *client, std::vector<std::string> comma
             Privmsg::privmsg(client, commandParts, srv);
         
 
+    }
+    else if((commandParts.at(0) == "/SENDF" || commandParts.at(0) == "SENDF"))
+    {
+        SendF::sendFile(client, commandParts, srv);
+
+    }
+    else if((commandParts.at(0) == "/GETF" || commandParts.at(0) == "GETF"))
+    {
+        std::cout << "GETF" << std::endl;
     }
     else
      return (client->sendMessage("giris basarisiz ve sg"));
