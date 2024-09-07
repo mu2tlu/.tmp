@@ -198,7 +198,7 @@ void Server::handleClientMessage(int clientSocket){
         }
 
 
-        Client& client = _clients[clientSocket];
+        Client client = _clients[clientSocket];
         //Mesaj isleme burada olacak messagehandler
         	size_t endOfCommand;
             std::string command;
@@ -279,7 +279,7 @@ void Server::closeConnection(int clientSocket){
             //burda chanel close eklenicek
             _clients.erase(it);
         }
-        std::vector<std::pair<int, std::string> >::const_iterator it12 = _nickList.begin();
+        std::vector<std::pair<int, std::string> >::iterator it12 = _nickList.begin();
         if(it12 != _nickList.end() ) 
         {
             _nickList.erase(it12);

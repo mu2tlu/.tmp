@@ -40,7 +40,7 @@ void Client::setUsername(const std::string& username){_username = username;}
 void Client::setHostname(const std::string& hostname){_hostname = hostname;}
 void Client::setClientIp(const std::string& ip){_clientIp = ip;}
 
-void Client::setHasNick(bool hasNick){_hasNick = true;}
+void Client::setHasNick(bool hasNick){_hasNick = hasNick;}
 void Client::setAuth(bool auth) {_isAuth = auth;}
 void Client::setLoged(bool loged) {_loged = loged;}
 

@@ -36,6 +36,7 @@ void Nick::nick(Client *client, const std::vector<std::string> commandParts, Ser
     else
     {
         srv->registerNick(nick, client->getFd());
+        
         client->setNickname(nick);
         client->setHasNick(true);
         return;
