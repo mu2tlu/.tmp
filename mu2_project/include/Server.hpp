@@ -47,7 +47,7 @@ class Server {
         static const size_t BUFFER_SIZE = 1024;
         //Namelist
         std::vector<std::pair<int, std::string> > _nickList;
-        std::map<int, File> _file; //mu2
+        std::map<std::string, File> _file; //mu2
 
     public:
         Server(int port, const  std::string& password, const std::string& host);
@@ -61,7 +61,7 @@ class Server {
         bool registerNick(const std::string& nick, int id);
 
         //File
-        std::map<int, File> getFile() const; //mu2
+        std::map<std::string, File>& getFiles(); //mu2
 
     private:
         void setPollFd();

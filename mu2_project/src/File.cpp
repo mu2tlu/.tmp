@@ -6,7 +6,13 @@
 class Client;
 class Server;
 
-File::File() {};
+File::File() {
+	_name = "";
+	_path = "";
+	_sender = "";
+	_receiver = "";
+	_buffer = "";
+};
 
 File::~File() {};
 
@@ -26,8 +32,8 @@ File & File::operator=( const File &copy )
 File::File( std::string name, std::string path, std::string sender, std::string receiver )
     : _name(name), _path(path), _sender(sender), _receiver(receiver) {};
 
-std::string File::getName(const std::string & name) { return name; };
-std::string File::getPath(const std::string & path) { return path; };
-std::string File::getSender(const std::string & sender) { return sender; };
-std::string File::getReceiver(const std::string & receiver) { return receiver; };
-std::string File::getBuffer(const std::string & buffer) { return buffer; };
+std::string File::getName()const { return _name; };
+std::string File::getPath() { return _path; };
+std::string File::getSender() { return _sender; };
+std::string File::getReceiver() { return _receiver; };
+std::string File::getBuffer() { return _buffer; };

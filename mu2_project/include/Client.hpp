@@ -16,7 +16,7 @@ class Client{
         std::string _servername;
         bool        _isAuth;
         bool        _hasNick;
-        bool       	_isOperator;
+        // bool       	_isOperator;
         bool        _loged;
 
     public:

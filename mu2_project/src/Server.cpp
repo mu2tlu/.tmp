@@ -69,6 +69,7 @@ std::string Server::receiveMessage(int clientSocket){
             break;
         }
     }
+    std::cout << "Message: " << message << std::endl;
 
     if(bytesRead == 0){
         //Baglanti kapandi
@@ -190,6 +191,7 @@ void Server::acceptConnection(){
 void Server::handleClientMessage(int clientSocket){
     try {
         std::string message = receiveMessage(clientSocket);
+
         if (message.empty()) {
             return; // baglanti zaten kapatildi
         }
@@ -282,6 +284,7 @@ void Server::closeConnection(int clientSocket){
     }
 }
 
-std::map<int, File> Server::getFile() const {
+std::map<std::string, File>& Server::getFiles() {
+
     return _file;
 }

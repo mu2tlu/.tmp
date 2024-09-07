@@ -247,6 +247,7 @@ void Server::listen(void)
                 try
                 {
                     std::string message = read(pollFds[i].fd);
+                    std::cout << "message" << message << std::endl;
                     Command::Execute(*this, message, pollFds[i].fd);
                 } catch (ServerException::ReadException &e) {}
             }

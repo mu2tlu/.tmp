@@ -13,17 +13,17 @@ class File
 		std::string _path;
 		std::string _sender;
 		std::string _receiver;
-		std::string _buffer[BUFF_SIZE];
+		std::string _buffer;
 	public:
 		File(std::string Name, std::string Path, std::string Sender, std::string Receiver );
 		File(const File &copy);
 		~File();
 		File & operator = ( const File &copy );
-		static std::string getName(const std::string & name);
-		static std::string getPath(const std::string & path);
-		static std::string getSender(const std::string & sender);
-		static std::string getReceiver(const std::string & receiver);
-		static std::string getBuffer(const std::string & buffer);
+		std::string getName() const;
+		std::string getPath();
+		std::string getSender();
+		std::string getReceiver();
+		std::string getBuffer();
 };
 
 #endif
