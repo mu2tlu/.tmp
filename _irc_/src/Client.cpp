@@ -47,6 +47,8 @@ void Client::authenticate(){_isAuth = true;}
 void Client::deauthenticate(){_isAuth = false;}
 
 
+
+
 std::string Client::getPrefix() const
 {
 	std::string username = this->getUsername().empty() ? "*" : _username;
@@ -69,8 +71,3 @@ void Client::sendReply(const std::string& reply) const
 	sendMessage(getPrefix() + " " + reply);
 }
 
-
-// std::vector<Channel*> Client::getChannels() const
-// {
-// 	return this->_channels;
-// }

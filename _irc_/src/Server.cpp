@@ -224,9 +224,6 @@ void Server::handleClientMessage(int clientSocket){
                 }
                 message.clear();
             }
-        if(!sendMessage(clientSocket, "Server received: " + message)) {
-            closeConnection(clientSocket);
-        }
     } catch (const ServerException& e) {
         std::cerr << "Error handling client message: " << e.what() << std::endl;
         closeConnection(clientSocket);
@@ -299,4 +296,32 @@ Client* Server::getClient(const std::string  &nickname)
 			return &(it->second);
 	}
 	return NULL;
+}
+
+
+void Server::removeChannel(const std::string& channelName)
+{
+    std::map<std::string, Channel*>::iterator it = _channels.find(channelName);
+    if (it != _channels.end()) {
+        Channel* channel = it->second;
+
+        // Kanalın içindeki tüm kullanıcıları bilgilendir
+        std::vector<std::string> clientNicks = channel->getChannelClients();
+        for (std::vector<std::string>::iterator nickIt = clientNicks.begin(); nickIt != clientNicks.end(); ++nickIt) {
+            Client* client = getClient(*nickIt);  // Nickname'e göre client'ı al
+            if (client) {
+                client->sendReply(RPL_PART(client->getNickname(), channelName, "The channel has been removed"));
+            }
+        }
+
+        // Kanalı sunucudan kaldır
+        _channels.erase(it);
+
+        // Kanalı bellekten temizle
+        delete channel;
+
+        std::cout << "Channel '" << channelName << "' has been removed from the server." << std::endl;
+    } else {
+        std::cout << "Channel '" << channelName << "' not found." << std::endl;
+    }
 }

@@ -2,7 +2,7 @@
 #include "../include/Server.hpp"
 
 Channel::Channel(const std::string& name, const std::string& key)
-: _name(name), _key(key), _userLimit(10), _topic("alp"){}
+: _name(name), _key(key), _userLimit(10), _topic(""){}
 
 Channel::~Channel() {}
 
@@ -32,10 +32,10 @@ Channel* Server::getChannel(const std::string& channelName)
 bool Server::hasChannel(const std::string& channelName) {
     for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it) {
         if (it->first == channelName) {
-            return true;  // Kanal bulundu
+            return true;  
         }
     }
-    return false;  // Kanal bulunamadı
+    return false;
 }
 
 std::map<std::string, Channel*> Server::getChannels()
@@ -66,7 +66,6 @@ void Channel::broadcastMessage(const std::string& message) const
 }
 
 
-
 void Channel::broadcastMessage(const std::string& message, Client* user) const
 {
 	for (std::vector<Client*>::const_iterator it = _curClients.begin(); it != _curClients.end(); ++it)
@@ -76,4 +75,49 @@ void Channel::broadcastMessage(const std::string& message, Client* user) const
 			(*it)->sendMessage(message);
 		}
 	}
+}
+
+
+void Channel::sendChannelUserList(Client *client)
+{
+    std::string nickList;
+    std::vector<std::string> nicks = getChannelClients(); 
+    for (std::vector<std::string>::iterator it = nicks.begin(); it != nicks.end(); ++it)
+    {
+        if (getOp() == *it) // @ işareti operatör için
+            nickList += "@";
+        nickList += *it + " ";
+    }
+    // Boşluk bırakmamak için son boşluğu kaldır
+    if (!nickList.empty())
+        nickList.pop_back();
+        
+    broadcastMessage(RPL_NAMREPLY(client->getNickname(), getChannelName(), nickList));
+    broadcastMessage(RPL_ENDOFNAMES(client->getNickname(), getChannelName()));
+}
+
+void Channel::removeClientFromChannel(Client* client, Server* srv)
+{
+    std::vector<Client*>::iterator it = _curClients.begin();
+    while (it != _curClients.end()) {
+        if (*it == client) {
+            _curClients.erase(it);
+            break; 
+        }
+        ++it;
+    }
+    
+    // Eğer kanal boşsa ve silinmesi gerekiyorsa, kanalı sil
+    if (_curClients.empty())
+        srv->removeChannel(getChannelName());  // Kanalı sunucudan kaldır
+
+    else if (!_curClients.empty() && (getOp() == client->getNickname()))
+    {
+        // Eğer kanal boş değilse ve kullanıcı operator ise, yeni bir operator atama
+        setOp(_curClients.front()->getNickname());
+        _curClients.front()->sendReply("You are now the operator of " + getChannelName());
+    }
+    if(!_curClients.empty())
+        sendChannelUserList(client);
+
 }

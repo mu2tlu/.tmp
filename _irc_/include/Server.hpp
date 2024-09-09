@@ -70,6 +70,7 @@ class Server {
         bool hasChannel(const std::string& channelName);
         std::map<std::string, Channel*> getChannels();
         Client* getClient(const std::string  &nickname);
+        void removeChannel(const std::string& channelName);
         
 
 

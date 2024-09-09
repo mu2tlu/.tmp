@@ -6,8 +6,8 @@
 #include "../include/Server.hpp"
 
 
+class Server;
 class Client;
-
 class Channel
 {
 private:
@@ -34,16 +34,15 @@ public:
     std::string getTopic() const { return _topic; }
     std::string getOp() const { return _opNick; }
 
-    std::vector<int> getFds() const;
 
     int getUserLimit() const { return _userLimit; }
     int getChannelClientCount() const {return _curClients.size();}
 
     // SETTERS
     void setKey(const std::string& key) { _key = key; }
+    void setTopic(const std::string& topic) { _topic = topic; }
     void setOp(const std::string& opNick) { _opNick = opNick; }
     void setUserLimit(const int userLimit) { _userLimit = userLimit; }
-    void setTopic(std::string topic, Client* user);
 
 
     // ACTIONS
@@ -52,6 +51,8 @@ public:
     std::vector<std::string> getChannelClients() const;
     void broadcastMessage(const std::string& message) const;
     void broadcastMessage(const std::string& message, Client* user) const;
+    void sendChannelUserList(Client *client);
+    void removeClientFromChannel(Client* client, Server* srv);
 };
 
 #endif

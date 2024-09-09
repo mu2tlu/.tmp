@@ -19,7 +19,6 @@ class Client{
         bool _isAuth;
         bool _hasNick;
         bool _loged;
-        // std::vector<Channel*> _channels;
 
     public:
         Client();

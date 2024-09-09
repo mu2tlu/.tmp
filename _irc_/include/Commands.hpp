@@ -71,6 +71,15 @@ class Join
         static void join(Client *client, const std::vector<std::string> commandParts, Server *srv);
 };
 
+class Part
+{
+    private:
+		Part();
+		~Part();
+	public:
+        static void part(Client *client, const std::vector<std::string> commandParts, Server *srv);
+};
+
 class Topic
 {
     private:

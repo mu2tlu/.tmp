@@ -57,8 +57,12 @@ void CommandParser::handleCommand(Client *client, std::vector<std::string> comma
             Join::join(client, commandParts, srv);
         else if (commandParts.at(0) == "/PRIVMSG" || commandParts.at(0) == "PRIVMSG")
             Privmsg::privmsg(client, commandParts, srv);
-        // else if (commandParts.at(0) == "/LIST" || commandParts.at(0) == "LIST")
-        //     List::list(client, srv);
+        else if (commandParts.at(0) == "/LIST" || commandParts.at(0) == "LIST")
+            List::list(client, srv);
+        else if (commandParts.at(0) == "/PART" || commandParts.at(0) == "PART")
+            Part::part(client, commandParts, srv);
+        else if (commandParts.at(0) == "/TOPIC" || commandParts.at(0) == "TOPIC")
+            Topic::topic(client, commandParts, srv);
         else 
         {
             std::cout << "giris basarili ve buradasin "<< std::endl;

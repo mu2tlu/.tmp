@@ -1,10 +1,10 @@
 NAME = ircserv
 CXX = c++
-CXXFLAGS =
+CXXFLAGS = -g
 SRCS =	src/main.cpp src/Server.cpp src/Client.cpp src/SignalHandler.cpp src/PollManager.cpp src/Channel.cpp \
 		src/commands/Commands.cpp src/commands/Cap.cpp src/commands/Privmsg.cpp \
 		src/commands/Pass.cpp src/commands/Notice.cpp src/commands/Nick.cpp src/commands/User.cpp \
-		src/commands/Join.cpp src/commands/Topic.cpp 
+		src/commands/Join.cpp src/commands/List.cpp src/commands/Part.cpp src/commands/Topic.cpp \
 
 OBJS = $(SRCS:src/%.cpp=obj/%.o)
 INCLUDES = -Iinclude
