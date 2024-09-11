@@ -23,9 +23,10 @@ class Bot
 		void listen();
 		void processMessage(const std::string &msg);
 		int getSocket() const;
-		void WelcomeMsg(const std::string &userNick) {
-			sendMsg(userNick, "Welcome! We've been waiting for you!");
-			}
+		void WelcomeMsg(const std::string &channel, const std::string &userNick)
+		{
+			sendMsg(channel, userNick + ", Welcome! We've been waiting for you!");
+		}	
 	private:
 		int		sock;
 		std::string	serv;

@@ -37,7 +37,6 @@ public:
 
     int getUserLimit() const { return _userLimit; }
     int getChannelClientCount() const {return _curClients.size();}
-
     // SETTERS
     void setKey(const std::string& key) { _key = key; }
     void setTopic(const std::string& topic) { _topic = topic; }

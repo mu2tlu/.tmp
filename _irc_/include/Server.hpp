@@ -55,8 +55,6 @@ class Server {
     
         Bot* _bot;//BOT
 
-
-    
     public:
         Server(int port, const  std::string& password, const std::string& host);
         ~Server();
@@ -79,7 +77,7 @@ class Server {
 
         Bot* getBot() const; //BOT
         void botConnect(); //BOT
-
+        std::vector<std::string> _channelLisTemp; //BOT
 
     private:
         void setPollFd();
