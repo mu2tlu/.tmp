@@ -73,3 +73,9 @@ void CommandParser::handleCommand(Client *client, std::vector<std::string> comma
      return (client->sendMessage("You must login firstly"));
 
 }
+
+/* size=3 
+commandParts[0] = "PART"
+commandParts[1] = "#deneme"
+commandParts[2] = ":Leaving"
+*/

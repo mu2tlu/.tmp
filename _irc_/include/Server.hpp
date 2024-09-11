@@ -72,6 +72,7 @@ class Server {
         Client* getClient(const std::string  &nickname);
         void removeChannel(const std::string& channelName);
         
+        std::map<int, Client> getClientMap(); //mu2
 
 
     private:
