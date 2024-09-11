@@ -13,6 +13,7 @@
 #include "../include/ServerException.hpp"
 #include "../include/PollManager.hpp"
 #include "../include/Commands.hpp"
+#include "../include/Bot.hpp" //BOT
 
 
 #include <string>
@@ -35,6 +36,7 @@
 
 class Client;
 class Channel;
+class Bot; //BOT
 class Server {
 
     private:
@@ -50,7 +52,8 @@ class Server {
         static const size_t BUFFER_SIZE = 1024;
         //Namelist
         std::vector<std::pair<int, std::string> > _nickList;
-        
+    
+        Bot* _bot;//BOT
 
 
     
@@ -73,6 +76,9 @@ class Server {
         void removeChannel(const std::string& channelName);
         
         std::map<int, Client> getClientMap(); //mu2
+
+        Bot* getBot() const; //BOT
+        void botConnect(); //BOT
 
 
     private:

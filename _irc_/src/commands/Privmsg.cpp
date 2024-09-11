@@ -20,8 +20,6 @@ std::string clinet_find(std::string target, Client *client, Server *srv)
     {
         if (it->second.getNickname() == target)
             return target;
-        else if (it->second.getUsername() == target)
-            return it->second.getNickname();
     }
     return "";
 }
@@ -45,11 +43,11 @@ void Privmsg::privmsg(Client *client, const std::vector<std::string> commandPart
             message.erase(0, 1);
     }
 
-    if(commandParts[0] == "PRIVMSG" && commandParts.at(1)[0] != '#') {
+    if((commandParts[0] == "PRIVMSG"  || commandParts[0] == "/PRIVMSG") && commandParts.at(1)[0] != '#') {
         targetClient = srv->getClient(clinet_find(commandParts.at(1), client, srv));
         if (targetClient != NULL) {
             if(targetClient->getFd() != client->getFd()) 
-                targetClient->sendMessage(":" + client->getUsername() + " PRIVMSG " + commandParts.at(1) + " :" + message);
+                targetClient->sendMessage(":" + client->getNickname() + " PRIVMSG " + commandParts.at(1) + " :" + message);
             else 
                 std::cerr << "[ERROR] Cannot send message to self." << std::endl;
         }
@@ -58,13 +56,13 @@ void Privmsg::privmsg(Client *client, const std::vector<std::string> commandPart
             return;
         }
     }
-    else {
+    else if (srv->getChannel(commandParts.at(1))) {
         std::vector<std::string> channelTargetList = srv->getChannel(commandParts.at(1))->getChannelClients();
         
         for(size_t i = 0; i < channelTargetList.size(); i++) {
-            targetClient = srv->getClient(clinet_find(channelTargetList.at(i), client, srv));
+                targetClient = srv->getClient(clinet_find(channelTargetList.at(i), client, srv));
             if(targetClient->getFd() != client->getFd())
-                targetClient->sendMessage(":" + client->getUsername() + " PRIVMSG " + commandParts.at(1) + " :" + message);
+                targetClient->sendMessage(":" + client->getNickname() + " PRIVMSG " + commandParts.at(1) + " :" + message);
         }
     }
 }

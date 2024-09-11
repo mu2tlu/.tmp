@@ -23,11 +23,7 @@ bool Server::authClient(int clientSocket){
     } else {
         sendMessage(clientSocket, "Invalid Password. Connection Closed!\r\n");
         return false;
-    }
-    
-    
-    
-    
+    } 
 }
 
 bool Server::verifyPassword(const std::string& password){
@@ -170,6 +166,21 @@ void Server::setPollFd(){
     fds.push_back(serverPollFd);
 }
 
+void Server::botConnect() //BOT
+{
+     try
+    {
+        this->_bot = new Bot("localhost", _portNumber, _password);
+    }
+    catch (const std::exception &e)
+    {
+        delete _bot;
+        _bot = NULL;
+        write(STDOUT_FILENO, e.what(), strlen(e.what()));
+    }
+
+}
+
 
 void Server::acceptConnection(){
     struct sockaddr_in clientAddr;
@@ -234,6 +245,7 @@ void Server::handleClientMessage(int clientSocket){
 void Server::run(){
 
     SignalHandler::setup();
+    botConnect();
     std::cout << GREEN << "Server <" << _serverSocket - 2 << "> Connected" << WHITE << std::endl;
     std::cout << "Waiting to accept a connection..." << std::endl;
 
@@ -251,7 +263,11 @@ void Server::run(){
             if (fds[i].revents & POLLIN) {
                 if (fds[i].fd == _serverSocket) {
                     acceptConnection();
-                } else {
+                }
+                else if (fds[i].fd == _bot->getSocket()) { //BOT
+                    _bot->listen();
+                }       
+                else {
                     handleClientMessage(fds[i].fd);
                 } 
             }
@@ -304,6 +320,10 @@ std::map<int, Client> Server::getClientMap()
     return _clients;
 }
 
+Bot * Server::getBot() const //BOT
+{
+    return _bot;
+}
 void Server::removeChannel(const std::string& channelName)
 {
     std::map<std::string, Channel*>::iterator it = _channels.find(channelName);

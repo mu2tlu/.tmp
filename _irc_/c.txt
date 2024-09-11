@@ -1,0 +1,3 @@
+/pass 42
+/nick cn
+/user cn hostname_c server_adı gerçek_adı_c
