@@ -21,7 +21,7 @@ class Bot
 		void sendMsg(const std::string &channel, const std::string &msg);
 		void sendRegMsg(const std::string &msg);
 		void listen();
-		void processMessage(const std::string &msg);
+		int processMessage(const std::string &msg);
 		int getSocket() const;
 		void WelcomeMsg(const std::string &channel, const std::string &userNick)
 		{

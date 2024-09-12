@@ -84,11 +84,11 @@ void Bot::listen()
 	}
 }
 
-void Bot::processMessage(const std::string &msg)
+int Bot::processMessage(const std::string &msg)
 {
-	if (msg.find("PRIVMSG") != std::string::npos)
+	if (!msg.empty())
 	{
-		std::string senderNick = msg.substr(1, msg.find("!") - 1);
+		std::string senderNick = msg.substr(0, msg.find("!"));
 		{
 			if (msg.find("hello") != std::string::npos)
 				sendMsg(senderNick, "Hello " + senderNick + "!");
@@ -103,18 +103,35 @@ void Bot::processMessage(const std::string &msg)
 			}
 
 			if (msg.find("uglyasf") != std::string::npos)
-				sendMsg(senderNick, "Please be more respectful! " + senderNick + "!");
+			{
+				sendMsg(senderNick, "Please be more respectful!");
+				return 0;
+			}
 			else if (msg.find("screw") != std::string::npos)
-				sendMsg(senderNick, "Please be more respectful!  " + senderNick + "!");
+			{
+				sendMsg(senderNick, "Please be more respectful!");
+				return 0;
+			}
 			else if (msg.find("dumb") != std::string::npos)
-				sendMsg(senderNick, "Please be more respectful!  " + senderNick + "!");
+			{
+				sendMsg(senderNick, "Please be more respectful!");
+				return 0;
+			}
 			else if (msg.find("stupid") != std::string::npos)
-				sendMsg(senderNick, "Please be more respectful!  " + senderNick + "!");
+			{
+				sendMsg(senderNick, "Please be more respectful!");
+				return 0;
+			}
 			else if (msg.find("idiot") != std::string::npos)
-				sendMsg(senderNick, "Please be more respectful!  " + senderNick + "!");
+			{
+				sendMsg(senderNick, "Please be more respectful!");
+				return 0;
+			}
 		}
 	}
+	return 1;
 }
+
 void Bot::sendMsg(const std::string &channel, const std::string &message)
 {
 	std::string fullMessage = "PRIVMSG " + channel + " :" + message + "\r\n";

@@ -43,7 +43,12 @@ void Privmsg::privmsg(Client *client, const std::vector<std::string> commandPart
             message.erase(0, 1);
     }
 
+
     if((commandParts[0] == "PRIVMSG"  || commandParts[0] == "/PRIVMSG") && commandParts.at(1)[0] != '#') {
+        
+        //"PRIVMSGbn:deneme"
+        if(srv->getBot()->processMessage(client->getNickname() + "!" + message) == 0) // BOT
+            return;
         targetClient = srv->getClient(clinet_find(commandParts.at(1), client, srv));
         if (targetClient != NULL) {
             if(targetClient->getFd() != client->getFd()) 
