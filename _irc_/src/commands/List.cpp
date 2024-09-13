@@ -16,13 +16,17 @@ void List::list(Client* client, Server* srv)
     {
         Channel *channel = it->second;
         if (channel->getChannelClientCount() == 0)
-            continue;  // Boş kanalı listeleme
+            continue; 
         
         std::string channelName = channel->getChannelName();
         std::string channelInfo = channel->getTopic();
-        client->sendReply(RPL_LIST(client->getNickname(), channelName, std::to_string(channel->getChannelClientCount()), channelInfo));
+        // Kullanıcı sayısını string'e dönüştür
+        std::stringstream ss;
+        ss << channel->getChannelClientCount();
+        std::string userCount = ss.str();
+
+        client->sendReply(RPL_LIST(client->getNickname(), channelName, userCount, channelInfo));
     }
     
     client->sendReply(RPL_LISTEND(client->getNickname()));
 }
-

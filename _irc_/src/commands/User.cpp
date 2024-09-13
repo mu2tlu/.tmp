@@ -1,4 +1,5 @@
 #include "../../include/Commands.hpp"
+#include "../../include/Server.hpp"
 
 void User::user(Client *client, const std::vector<std::string> commandParts, Server *srv)
 {
@@ -13,17 +14,24 @@ if (!client->getHasNick())
     client->setUsername(commandParts.at(1));
     client->setClientIp(commandParts.at(2));
 
-     // realname birden fazla kelimeden olusuyorsa kelimeyi birlestirir
     std::string realname = commandParts.at(3);
     for (size_t i = 4; i < commandParts.size(); ++i)
     {
         realname += " " + commandParts[i];
     }
     if (realname[0] == ':') {
-        realname.erase(0, 1);  // ':' karakterini kaldır
+        realname.erase(0, 1);  
     }
     client->setRealname(realname);
     
     client->sendReply(RPL_WELCOME(srv->getHost(), client->getNickname(), client->getPrefix()));
     client->setLoged(true);
+    
+    srv->getBot()->sendWelMsg(client);
+
+    // std::string buffer;
+	// buffer = "PRIVMSG " + client->getNickname() + " :" + "Welcome Our IRC Server !!" + "\r\n";
+
+	// send(srv->getBot()->getSocket(), buffer.c_str(), buffer.length(), 0);
+
 }

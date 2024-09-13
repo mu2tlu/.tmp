@@ -63,19 +63,14 @@ void CommandParser::handleCommand(Client *client, std::vector<std::string> comma
             Part::part(client, commandParts, srv);
         else if (commandParts.at(0) == "/TOPIC" || commandParts.at(0) == "TOPIC")
             Topic::topic(client, commandParts, srv);
-        else 
-        {
-            std::cout << "giris basarili ve buradasin "<< std::endl;
-            return (client->sendMessage("unknown command"));
-        }
+        else if(commandParts.at(0) == "/KICK" || commandParts.at(0) == "KICK")
+            Kick::kick(client, commandParts, srv);
+        else if(commandParts.at(0) == "/QUIT" || commandParts.at(0) == "QUIT")
+            Quit::quit(client, commandParts, srv);
+        else
+            client->sendMessage("Unknown command or permision denied!");
     }
     else
      return (client->sendMessage("You must login firstly"));
 
 }
-
-/* size=3 
-commandParts[0] = "PART"
-commandParts[1] = "#deneme"
-commandParts[2] = ":Leaving"
-*/

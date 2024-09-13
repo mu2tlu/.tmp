@@ -8,10 +8,10 @@
 bool Server::isNickTaken(const std::string& nick) {
         for (size_t i = 0; i < _nickList.size(); ++i) {
             if (_nickList[i].second == nick) {
-                return true;  // Nickname zaten alınmış
+                return true;  // Nickname already using.
             }
         }
-        return false;  // Nickname alınmamış
+        return false;  
     }
 
 bool Server::registerNick(const std::string& nick, int id) 

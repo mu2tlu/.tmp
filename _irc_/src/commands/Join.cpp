@@ -1,6 +1,5 @@
 #include "../../include/Commands.hpp"
 
-// void find(const std::string& name, Client* client, Server* server);
 
 void joinChannel(Client* client, const std::string& channelName, const std::vector<std::string>& commandParts, Server* srv)
 {
@@ -48,33 +47,8 @@ void joinChannel(Client* client, const std::string& channelName, const std::vect
     channel->sendChannelUserList(client);
 }
 
-std::string find(std::string target, Client *client, Server *srv)//BOT isim düzenlencek
-{
-    std::map<int, Client> client_map = srv->getClientMap();
 
-    for (std::map<int, Client>::iterator it = client_map.begin(); it != client_map.end(); it++)
-    {
-        if (it->second.getNickname() == target)
-            return target;
-    }
-    return "";
-}
 
-int deneme(Server *srv, std::string nickname) //BOT
-{
-    if(srv->_channelLisTemp.size() == 0) {
-        srv->_channelLisTemp.push_back(nickname);
-        return 1;
-    }
-
-    for(int i = 0; i < srv->_channelLisTemp.size(); i++) {
-        if(srv->_channelLisTemp[i] != nickname){
-            srv->_channelLisTemp.push_back(nickname);
-            return 1;
-        }
-    }
-    return 0;
-}
 
 void Join::join(Client *client, const std::vector<std::string> commandParts, Server *srv )
 {
@@ -84,16 +58,5 @@ void Join::join(Client *client, const std::vector<std::string> commandParts, Ser
     if (!channel.empty())
         joinChannel(client, channel, commandParts, srv);
 
-    if(srv->getChannel(channel)->getChannelClientCount() >= 1) //BOT
-    {
-        Client *targetClient = NULL;
 
-        std::vector<std::string> channelTargetList = srv->getChannel(commandParts.at(1))->getChannelClients();
-
-        for(size_t i = 0; i < channelTargetList.size(); i++) {
-            targetClient = srv->getClient(find(channelTargetList.at(i), client, srv));
-            if(deneme(srv, targetClient->getNickname()) == 1) //BOT
-               srv->getBot()->WelcomeMsg(commandParts.at(1), targetClient->getNickname());
-        }
-    }
 }

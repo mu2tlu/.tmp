@@ -5,7 +5,15 @@ Server::Server(int port, const std::string& password, const std::string& host)
     :_portNumber(port), _password(password), _host(host) {
 }
 
-Server::~Server() {}
+Server::~Server() 
+{
+    delete _bot;
+    // Sunucu nesnesi yok edilirken tüm kanalları serbest bırak
+    for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it) {
+        delete it->second;  // Dinamik olarak oluşturulan kanalları serbest bırak
+    }
+    _channels.clear();
+}
 
 bool Server::authClient(int clientSocket){
     
@@ -23,7 +31,7 @@ bool Server::authClient(int clientSocket){
     } else {
         sendMessage(clientSocket, "Invalid Password. Connection Closed!\r\n");
         return false;
-    } 
+    }
 }
 
 bool Server::verifyPassword(const std::string& password){
@@ -40,13 +48,13 @@ bool Server::sendMessage(int clientSocket, const std::string& msg) {
         sent = send(clientSocket, msg.c_str() + totalSend, remaining, 0);
         if (sent < 0) {
             if (errno == EWOULDBLOCK || errno == EAGAIN) {
-                // daha sonra tekrar dene
+                // tyr again
                 continue;
             } else {
                 throw ServerException("Error sending message to client");
             }
         } else if (sent == 0) {
-            // baglanti kapandi
+            // socket connection closed.
             return false;
         }
         totalSend += sent;
@@ -58,7 +66,6 @@ bool Server::sendMessage(int clientSocket, const std::string& msg) {
 
 std::string Server::receiveMessage(int clientSocket){
     char buffer[BUFFER_SIZE];
-    memset(buffer, 0, BUFFER_SIZE);
     std::string message;
     ssize_t bytesRead ;
 
@@ -71,7 +78,7 @@ std::string Server::receiveMessage(int clientSocket){
     }
 
     if(bytesRead == 0){
-        //Baglanti kapandi
+        //connection closed.
         std::cout << RED << "Client <" << clientSocket - 3 << "> Disconnected" << WHITE << std::endl;
         closeConnection(clientSocket);
         return "";
@@ -82,7 +89,7 @@ std::string Server::receiveMessage(int clientSocket){
 }
 
 void Server::createSocket(){
-    //1. Socket Olusturma
+    //1. socket create
      _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if(_serverSocket == -1){
         throw ServerException("Failed to create socket");
@@ -90,7 +97,7 @@ void Server::createSocket(){
 }
 
 void Server::configureSocket(){
-    //2. Socket Ayarlama /SOL_SOCKET = socket seviysei protokol /SO_REUSEADDR = ayni adres ayni port yeniden kullanim izini
+    //2. Socket conf /SOL_SOCKET = socket level protocols /SO_REUSEADDR = re useble port
     int opt = 1;
     if(setsockopt(_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0){
         throw ServerException("Failed to configure socket");
@@ -98,7 +105,7 @@ void Server::configureSocket(){
 }
 
 void Server::bindSocket(){
-    //3.Soketi adrese ve porta baglama.
+    //3. socket connection port and adress
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(_portNumber);
@@ -106,19 +113,20 @@ void Server::bindSocket(){
 
     if(bind(_serverSocket, (const sockaddr*)&server_addr, sizeof(server_addr)) < 0){
         throw ServerException("Failed bind mode maybe port already used");
+        close(_serverSocket);
         exit(1);
     }
 }
 
 void Server::listenMode(){
-    //4.Socketi Dinleme Moduna Alma
+    //4.socket listening mode
     if(listen(_serverSocket,10) < 0){
         throw ServerException("Failed to listen on socket");
     }
 }
 
 void Server::setNonBlocking(int socket){
-    //5.Soketi Bloklanamayan Moda alma
+    //5.Socket setg nonblocking mode 
     int flags = fcntl(socket, F_GETFL, 0);
     if (flags == -1) {
         throw ServerException("Failed to get server socket flags");
@@ -155,6 +163,7 @@ void Server::setupServerSocket(){
         setNonBlocking(_serverSocket);
     } catch (const ServerException& e){
         std::cerr << "Socket initialization failed: " << e.what() << std::endl;
+        close(_serverSocket);
         exit(1);
     }
 }
@@ -162,23 +171,7 @@ void Server::setPollFd(){
     pollfd serverPollFd;
     serverPollFd.fd = _serverSocket;
     serverPollFd.events = POLLIN;
-    //renevt add
     fds.push_back(serverPollFd);
-}
-
-void Server::botConnect() //BOT
-{
-     try
-    {
-        this->_bot = new Bot("localhost", _portNumber, _password);
-    }
-    catch (const std::exception &e)
-    {
-        delete _bot;
-        _bot = NULL;
-        write(STDOUT_FILENO, e.what(), strlen(e.what()));
-    }
-
 }
 
 
@@ -186,7 +179,7 @@ void Server::acceptConnection(){
     struct sockaddr_in clientAddr;
     socklen_t clientAddrLen = sizeof(clientAddr);
    
-    // Yeni Baglanti Kabul Etme
+    // Re connection
     int clientSocket = accept(_serverSocket, (struct sockaddr*)&clientAddr, &clientAddrLen);
     if(clientSocket == -1){
         if(errno != EWOULDBLOCK && errno != EAGAIN){
@@ -206,12 +199,8 @@ void Server::handleClientMessage(int clientSocket){
     try {
         std::string message = receiveMessage(clientSocket);
         if (message.empty()) {
-            return; // baglanti zaten kapatildi
+            return; // Connection alraedy closed
         }
-
-
-        Client& client = _clients[clientSocket];
-        //Mesaj isleme burada olacak messagehandler
         	size_t endOfCommand;
             std::string command;
 
@@ -273,30 +262,29 @@ void Server::run(){
             }
         }
     }
-    
     std::cout << "Server Shutting Down Succesfully" << std::endl;
 }
 
 
 void Server::closeConnection(int clientSocket){
     try {
-        //soket kapama
         if (close(clientSocket) < 0) {
             throw ServerException("Error closing client socket");
         }
-        //poll kaldirma
         _pollManager.removeFd(clientSocket);
 
-        //client map kaldirma
         std::map<int, Client>::iterator it = _clients.find(clientSocket);
         if(it != _clients.end()) {
-            //burda chanel close eklenicek
             _clients.erase(it);
         }
-        std::vector<std::pair<int, std::string> >::const_iterator it12 = _nickList.begin();
-        if(it12 != _nickList.end() ) 
+        
+        for (std::vector<std::pair<int, std::string> >::iterator it = _nickList.begin(); it != _nickList.end(); ++it)
         {
-            _nickList.erase(it12);
+            if (it->first == clientSocket)
+            {
+                _nickList.erase(it);
+                break;
+            }
         }
     
         std::cout << YELLOW << "Client <" << clientSocket - 3 << "> Connection closed" << WHITE << std::endl;
@@ -307,42 +295,36 @@ void Server::closeConnection(int clientSocket){
 
 Client* Server::getClient(const std::string  &nickname)
 {
-	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); it++)
+    std::cout << "Searching for client: " << nickname << std::endl;
+	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (it->second.getNickname() == nickname)
+		if (it->second.getNickname() == nickname){
+            std::cout << "Client found: " << nickname << std::endl;
 			return &(it->second);
+        }
 	}
+    std::cout << "Client not found: " << nickname << std::endl;
 	return NULL;
 }
 
-std::map<int, Client> Server::getClientMap()
-{
-    return _clients;
-}
 
-Bot * Server::getBot() const //BOT
-{
-    return _bot;
-}
 void Server::removeChannel(const std::string& channelName)
 {
     std::map<std::string, Channel*>::iterator it = _channels.find(channelName);
     if (it != _channels.end()) {
         Channel* channel = it->second;
-
-        // Kanalın içindeki tüm kullanıcıları bilgilendir
         std::vector<std::string> clientNicks = channel->getChannelClients();
         for (std::vector<std::string>::iterator nickIt = clientNicks.begin(); nickIt != clientNicks.end(); ++nickIt) {
-            Client* client = getClient(*nickIt);  // Nickname'e göre client'ı al
+            Client* client = getClient(*nickIt);  
             if (client) {
                 client->sendReply(RPL_PART(client->getNickname(), channelName, "The channel has been removed"));
             }
         }
 
-        // Kanalı sunucudan kaldır
+        // Remove channel from server
         _channels.erase(it);
 
-        // Kanalı bellekten temizle
+        // remove channel from memory
         delete channel;
 
         std::cout << "Channel '" << channelName << "' has been removed from the server." << std::endl;
@@ -350,3 +332,25 @@ void Server::removeChannel(const std::string& channelName)
         std::cout << "Channel '" << channelName << "' not found." << std::endl;
     }
 }
+
+
+void Server::botConnect() //BOT
+{
+     try
+    {
+        this->_bot = new Bot("localhost", _portNumber, _password);
+    }
+    catch (const std::exception &e)
+    {
+        delete _bot;
+        _bot = NULL;
+        write(STDOUT_FILENO, e.what(), strlen(e.what()));
+    }
+
+}
+
+Bot * Server::getBot() const //BOT
+{
+    return _bot;
+}
+

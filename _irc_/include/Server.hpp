@@ -8,14 +8,16 @@
 #define WHITE "\e[1;37m"
 #define YELLOW "\e[1;33m"
 
-#include "../include/SignalHandler.hpp"
-#include "../include/Client.hpp"
-#include "../include/ServerException.hpp"
-#include "../include/PollManager.hpp"
-#include "../include/Commands.hpp"
-#include "../include/Bot.hpp" //BOT
+#include "SignalHandler.hpp"
+#include "Client.hpp"
+#include "ServerException.hpp"
+#include "PollManager.hpp"
+#include "Commands.hpp"
+#include "Bot.hpp" //BOT
+#include "Utils.hpp"
 
-
+#include <netdb.h>
+#include <sys/types.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -30,8 +32,7 @@
 #include <fcntl.h>
 #include <cerrno>
 #include <map>
-#include <algorithm> // std::remove için gerekli
-#include "Utils.hpp"
+#include <algorithm> 
 
 
 class Client;
@@ -52,9 +53,10 @@ class Server {
         static const size_t BUFFER_SIZE = 1024;
         //Namelist
         std::vector<std::pair<int, std::string> > _nickList;
-    
         Bot* _bot;//BOT
+        
 
+    
     public:
         Server(int port, const  std::string& password, const std::string& host);
         ~Server();
@@ -72,16 +74,16 @@ class Server {
         std::map<std::string, Channel*> getChannels();
         Client* getClient(const std::string  &nickname);
         void removeChannel(const std::string& channelName);
-        
-        std::map<int, Client> getClientMap(); //mu2
-
+        std::map<int, Client> getClientMap(){return _clients;}
         Bot* getBot() const; //BOT
         void botConnect(); //BOT
-        std::vector<std::string> _channelLisTemp; //BOT
+        bool sendMessage(int clientSocket, const std::string& msg);
+        void closeConnection(int clientSocket);
+
 
     private:
         void setPollFd();
-        //Socket Fonksiyonları:
+        //Socket 
         void setupServerSocket();
         void setNonBlocking(int socket);
         void createSocket();
@@ -92,19 +94,13 @@ class Server {
 
         void acceptConnection();
         void handleClientMessage(int clientSocket);
-        void closeConnection(int clientSocket);
 
         //Authenticate
         bool authClient(int clientSocket);
         bool verifyPassword(const std::string& password);
 
         //Message
-        bool sendMessage(int clientSocket, const std::string& msg);
         std::string receiveMessage(int clientSocket);
 
-
-
-
 };
-
 #endif

@@ -38,7 +38,7 @@ void Client::setRealname(const std::string& realname){_realname = realname;}
 void Client::setUsername(const std::string& username){_username = username;}
 void Client::setClientIp(const std::string& ip){_clientIp = ip;}
 
-void Client::setHasNick(bool hasNick){_hasNick = true;}
+void Client::setHasNick(bool hasNick){_hasNick = hasNick;}
 void Client::setAuth(bool auth) {_isAuth = auth;}
 void Client::setLoged(bool loged) {_loged = loged;}
 
@@ -61,8 +61,7 @@ void Client::sendMessage(const std::string& message) const
 {
 	std::string buffer = message + "\r\n";
 
-	if (send(getFd(), buffer.c_str(), buffer.length(), 0) == -1)
-		ErrorLogger(FAILED_SOCKET_SEND, __FILE__, __LINE__);
+	send(getFd(), buffer.c_str(), buffer.length(), 0);
 }
 
 
@@ -71,3 +70,14 @@ void Client::sendReply(const std::string& reply) const
 	sendMessage(getPrefix() + " " + reply);
 }
 
+std::string Client::clientFind(std::string target, Server *srv)
+{
+    std::map<int, Client> client_map = srv->getClientMap();
+
+    for (std::map<int, Client>::iterator it = client_map.begin(); it != client_map.end(); it++)
+    {
+        if (it->second.getNickname() == target)
+            return target;
+    }
+    return "";
+}

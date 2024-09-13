@@ -21,12 +21,10 @@ class Bot
 		void sendMsg(const std::string &channel, const std::string &msg);
 		void sendRegMsg(const std::string &msg);
 		void listen();
-		int processMessage(const std::string &msg);
+		std::string processMessage(const std::string &msg);
 		int getSocket() const;
-		void WelcomeMsg(const std::string &channel, const std::string &userNick)
-		{
-			sendMsg(channel, userNick + ", Welcome! We've been waiting for you!");
-		}	
+		void sendWelMsg(Client* client);
+
 	private:
 		int		sock;
 		std::string	serv;

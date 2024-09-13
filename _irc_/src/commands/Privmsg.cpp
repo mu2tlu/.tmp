@@ -1,5 +1,4 @@
 #include "../../include/Commands.hpp"
-
 std::string merge_privmsg(const std::vector<std::string> &parts, const std::string delim)
 {
     std::string result;
@@ -11,63 +10,46 @@ std::string merge_privmsg(const std::vector<std::string> &parts, const std::stri
     }
     return result;
 }
-
-std::string clinet_find(std::string target, Client *client, Server *srv)
-{
-    std::map<int, Client> client_map = srv->getClientMap();
-
-    for (std::map<int, Client>::iterator it = client_map.begin(); it != client_map.end(); it++)
-    {
-        if (it->second.getNickname() == target)
-            return target;
-    }
-    return "";
-}
-
-void Privmsg::privmsg(Client *client, const std::vector<std::string> commandParts, Server *srv) 
+void Privmsg::privmsg(Client *client, const std::vector<std::string> commandParts, Server *srv)
 {
     Client *targetClient = NULL;
-
-    if (commandParts.size() < 2) {
-        std::cerr << "[ERROR] Target not found." << std::endl;
-        return;
-    }
+    if (commandParts.size() < 2)
+        return (client->sendReply(ERR_NEEDMOREPARAMS(client->getNickname(), "PRIVMSG")));
     std::string message;
-    if (commandParts.size() < 3) {
-        std::cerr << "[ERROR] Message not found." << std::endl;
-        return;
-    }
-    else {
+    if (commandParts.size() < 3)
+        return (client->sendMessage(ERR_NOTEXTTOSEND(client->getPrefix())));
+    else
+    {
         message = merge_privmsg(std::vector<std::string>(commandParts.begin() + 2, commandParts.end()), " ");
         if(message[0] == ':')
             message.erase(0, 1);
     }
-
-
-    if((commandParts[0] == "PRIVMSG"  || commandParts[0] == "/PRIVMSG") && commandParts.at(1)[0] != '#') {
+    if (client->getNickname() != srv->getBot()->getBotnick())
+        message = srv->getBot()->processMessage(client->getNickname() + "!" + message);
         
-        //"PRIVMSGbn:deneme"
-        if(srv->getBot()->processMessage(client->getNickname() + "!" + message) == 0) // BOT
-            return;
-        targetClient = srv->getClient(clinet_find(commandParts.at(1), client, srv));
-        if (targetClient != NULL) {
-            if(targetClient->getFd() != client->getFd()) 
-                targetClient->sendMessage(":" + client->getNickname() + " PRIVMSG " + commandParts.at(1) + " :" + message);
-            else 
-                std::cerr << "[ERROR] Cannot send message to self." << std::endl;
-        }
-        else {
-            std::cerr << "[ERROR] The destination client is not registered." << std::endl;
-            return;
-        }
+   
+    if((commandParts[0] == "PRIVMSG"  || commandParts[0] == "/PRIVMSG") && commandParts.at(1)[0] != '#')
+    {
+        targetClient = srv->getClient(client->clientFind(commandParts.at(1), srv));
+        if (targetClient == NULL)
+            return (client->sendMessage(ERR_NOSUCHNICK(client->getPrefix(), commandParts.at(1))));
+        else
+            targetClient->sendMessage(":" + client->getNickname() + " PRIVMSG " + commandParts.at(1) + " : " + message);
     }
-    else if (srv->getChannel(commandParts.at(1))) {
-        std::vector<std::string> channelTargetList = srv->getChannel(commandParts.at(1))->getChannelClients();
-        
-        for(size_t i = 0; i < channelTargetList.size(); i++) {
-                targetClient = srv->getClient(clinet_find(channelTargetList.at(i), client, srv));
-            if(targetClient->getFd() != client->getFd())
-                targetClient->sendMessage(":" + client->getNickname() + " PRIVMSG " + commandParts.at(1) + " :" + message);
+
+    else if (srv->getChannel(commandParts.at(1)))
+    {
+        Channel *chan = srv->getChannel(commandParts.at(1));
+        if(chan->isUserOnChannel(client)  || (srv->getBot()->getBotnick() == client->getNickname()))
+        {
+            std::vector<std::string> channelTargetList = srv->getChannel(commandParts.at(1))->getChannelClients();
+            for(size_t i = 0; i < channelTargetList.size(); i++)
+            {
+                targetClient = srv->getClient(client->clientFind(channelTargetList.at(i), srv));
+                
+                if(targetClient->getFd() != client->getFd() && targetClient->getNickname() != srv->getBot()->getBotnick())
+                    targetClient->sendMessage(":" + client->getNickname() + " PRIVMSG " + commandParts.at(1) + " :" + message);
+            }
         }
     }
 }

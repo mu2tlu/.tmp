@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+class Server;
 class Channel;
 
 class Client{
@@ -19,6 +20,7 @@ class Client{
         bool _isAuth;
         bool _hasNick;
         bool _loged;
+        
 
     public:
         Client();
@@ -34,7 +36,7 @@ class Client{
         bool getHasNick()const;
         bool getLoged()const;
         std::string getPrefix() const;
-        // std::vector<Channel*> getChannels() const;
+
 
         //set
         void setNickname(const std::string& nickname);
@@ -53,6 +55,7 @@ class Client{
         //Actions
         void sendMessage( const std::string& message ) const;
         void sendReply( const std::string& reply ) const;
+        std::string clientFind(std::string target, Server *srv);
 
 
 };

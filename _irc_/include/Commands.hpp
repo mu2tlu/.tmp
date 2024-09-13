@@ -107,16 +107,24 @@ class Privmsg
         static void privmsg(Client *client, const std::vector<std::string> commandParts, Server *srv);
 };
 
-class Notice
+
+class Kick
 {
-    private:
-		Notice();
-		~Notice();
+	private:
+		Kick();
+		~Kick();
 	public:
-        static void notice(Client *client, const std::vector<std::string> commandParts, Server *srv);
+    	static void kick(Client* client, const std::vector<std::string> commandParts, Server* srv);
 };
 
-
+class Quit
+{
+	private:
+		Quit();
+		~Quit();
+	public:
+    	static void quit(Client* client, const std::vector<std::string> commandParts, Server* srv);
+};
 
 
 #endif

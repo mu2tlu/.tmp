@@ -34,7 +34,7 @@ void Topic::topic(Client* client, std::vector<std::string> commandParts, Server*
         		if (i != commandParts.size() - 1)
             		newTopic += " ";
 			}
-			channel->setTopic(newTopic);  // Yeni topic ayarla
+			channel->setTopic(newTopic); 
 			channel->broadcastMessage(RPL_TOPIC(client->getNickname(), channelName, newTopic));
 		}
 	}

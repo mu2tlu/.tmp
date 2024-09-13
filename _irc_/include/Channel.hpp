@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "../include/Server.hpp"
+#include "Server.hpp"
 
 
 class Server;
@@ -13,19 +13,18 @@ class Channel
 private:
     // variables
     std::string _name;
-    std::string _topic;
-    size_t _userLimit;
     std::string _key;
+    size_t _userLimit;
+    std::string _topic;
     std::string _opNick;
     std::vector<Client*> _curClients;
 
 
 public:
-    // Parametreli yapıcı
     Channel(const std::string& name, const std::string& key = "");
+    Channel();
 
 
-    // Yıkıcı
     ~Channel();
 
     // GETTERS
@@ -37,6 +36,7 @@ public:
 
     int getUserLimit() const { return _userLimit; }
     int getChannelClientCount() const {return _curClients.size();}
+
     // SETTERS
     void setKey(const std::string& key) { _key = key; }
     void setTopic(const std::string& topic) { _topic = topic; }

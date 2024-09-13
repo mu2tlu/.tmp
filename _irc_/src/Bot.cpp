@@ -1,4 +1,5 @@
 #include "../include/Bot.hpp"
+#include "../include/Utils.hpp"
 
 Bot::Bot(const std::string &serv, int port, const std::string &pass)
 	: serv(serv),
@@ -19,9 +20,7 @@ Bot::~Bot()
 void Bot::connectServ()
 {
 	struct sockaddr_in server_addr;
-	struct hostent *host;
-
-	host = gethostbyname(serv.c_str());
+	
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
 		write(STDOUT_FILENO, "Error: Bot socket creation failed.\n", 34);
@@ -30,17 +29,19 @@ void Bot::connectServ()
 
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
-	server_addr.sin_addr = *((struct in_addr *)host->h_addr);
+	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	memset(&(server_addr.sin_zero), '\0', 8);
 
 	if (connect(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1)
 	{
+		close(sock);
 		write(STDOUT_FILENO, "Error: Bot socket connection failed.\n", 36);
 		exit(1);
 	}
 
 	if (fcntl(sock, F_SETFL, O_NONBLOCK) == -1)
-	{
+	{	
+		close(sock);
 		write(STDOUT_FILENO, "Error: Bot socket fcntl failed.\n", 32);
 		exit(1);
 	}
@@ -84,52 +85,45 @@ void Bot::listen()
 	}
 }
 
-int Bot::processMessage(const std::string &msg)
+std::string censorMessage(const std::string& message, const std::string blacklist[], int blacklistSize) {
+    std::string censoredMessage = message;
+    for (int i = 0; i < blacklistSize; ++i) {
+        size_t pos = 0;
+        std::string replacement(blacklist[i].length(), '*');
+        while ((pos = censoredMessage.find(blacklist[i], pos)) != std::string::npos) {
+            censoredMessage.replace(pos, blacklist[i].length(), replacement);
+            pos += replacement.length();
+        }
+    }
+    return censoredMessage;
+}
+
+
+std::string Bot::processMessage(const std::string &msg)
 {
-	if (!msg.empty())
-	{
-		std::string senderNick = msg.substr(0, msg.find("!"));
-		{
-			if (msg.find("hello") != std::string::npos)
-				sendMsg(senderNick, "Hello " + senderNick + "!");
-
-			if (msg.find("time") != std::string::npos || msg.find("date") != std::string::npos)
-			{
-				time_t rawtime;
-				struct tm *timeinfo;
-				time(&rawtime);
-				timeinfo = localtime(&rawtime);
-				sendMsg(senderNick, asctime(timeinfo));
-			}
-
-			if (msg.find("uglyasf") != std::string::npos)
-			{
-				sendMsg(senderNick, "Please be more respectful!");
-				return 0;
-			}
-			else if (msg.find("screw") != std::string::npos)
-			{
-				sendMsg(senderNick, "Please be more respectful!");
-				return 0;
-			}
-			else if (msg.find("dumb") != std::string::npos)
-			{
-				sendMsg(senderNick, "Please be more respectful!");
-				return 0;
-			}
-			else if (msg.find("stupid") != std::string::npos)
-			{
-				sendMsg(senderNick, "Please be more respectful!");
-				return 0;
-			}
-			else if (msg.find("idiot") != std::string::npos)
-			{
-				sendMsg(senderNick, "Please be more respectful!");
-				return 0;
-			}
-		}
-	}
-	return 1;
+    if (!msg.empty())
+{
+    std::string senderNick = msg.substr(0, msg.find("!"));
+    if (msg.find("Bot") != std::string::npos)
+        sendMsg(senderNick, "Hello " + senderNick + "!");
+    if (msg.find("time") != std::string::npos || msg.find("date") != std::string::npos)
+    {
+        time_t rawtime;
+        struct tm *timeinfo;
+        time(&rawtime);
+        timeinfo = localtime(&rawtime);
+        sendMsg(senderNick, asctime(timeinfo));
+    }
+    std::string blacklist[] = {"uglyasf", "screw", "dumb", "stupid", "idiot", "amk"};
+    int blacklistSize = sizeof(blacklist) / sizeof(blacklist[0]);
+    std::string censoredMsg = censorMessage(msg, blacklist, blacklistSize);
+    if (censoredMsg != msg)
+    {
+        sendMsg(senderNick, "Please be more respectful!");
+        return censoredMsg;
+    }
+}
+	return msg;
 }
 
 void Bot::sendMsg(const std::string &channel, const std::string &message)
@@ -146,4 +140,13 @@ void Bot::sendRegMsg(const std::string &message)
 int Bot::getSocket() const
 {
 	return sock;
+}
+
+
+void Bot::sendWelMsg(Client* client)
+{
+	std::string buffer;
+	buffer = ":" + getBotnick() + " PRIVMSG " + client->getNickname() + " :" + "Welcome Our IRC Server !!" + "\r\n";
+
+	send(client->getFd(), buffer.c_str(), buffer.length(), 0);
 }

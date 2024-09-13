@@ -14,7 +14,7 @@ int main(int argc, char **argv){
 		std::cout << "Invalid port" << std::endl;
 		return 1;
 	}
-    Server server(atoi(argv[1]),argv[2],"AMA");
+    Server server(port,argv[2],"AMA");
     server.initialize();
     server.run();    
 }
