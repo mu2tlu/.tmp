@@ -8,9 +8,9 @@ Server::Server(int port, const std::string& password, const std::string& host)
 Server::~Server() 
 {
     delete _bot;
-    // Sunucu nesnesi yok edilirken tüm kanalları serbest bırak
+    
     for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it) {
-        delete it->second;  // Dinamik olarak oluşturulan kanalları serbest bırak
+        delete it->second;
     }
     _channels.clear();
 }
