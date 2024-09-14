@@ -23,7 +23,6 @@ class Bot
 		void listen();
 		std::string processMessage(const std::string &msg);
 		int getSocket() const;
-		void sendWelMsg(Client* client);
 
 	private:
 		int		sock;

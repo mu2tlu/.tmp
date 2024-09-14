@@ -150,11 +150,3 @@ int Bot::getSocket() const
 {
 	return sock;
 }
-
-void Bot::sendWelMsg(Client* client)
-{
-	std::string buffer;
-	buffer = ":" + getBotnick() + " PRIVMSG " + client->getNickname() + " :" + "Welcome Our IRC Server !!" + "\r\n";
-
-	send(client->getFd(), buffer.c_str(), buffer.length(), 0);
-}

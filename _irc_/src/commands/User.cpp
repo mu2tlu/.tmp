@@ -27,11 +27,8 @@ if (!client->getHasNick())
     client->sendReply(RPL_WELCOME(srv->getHost(), client->getNickname(), client->getPrefix()));
     client->setLoged(true);
     
-    srv->getBot()->sendWelMsg(client);
-
-    // std::string buffer;
-	// buffer = "PRIVMSG " + client->getNickname() + " :" + "Welcome Our IRC Server !!" + "\r\n";
-
-	// send(srv->getBot()->getSocket(), buffer.c_str(), buffer.length(), 0);
+    std::string buffer;
+	buffer = "PRIVMSG " + client->getNickname() + " :" + "Welcome Our IRC Server !!" + "\r\n";
+	send(srv->getBot()->getSocket(), buffer.c_str(), buffer.length(), 0);
 
 }
