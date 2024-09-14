@@ -34,6 +34,8 @@ void Part::part(Client *client, const std::vector<std::string> commandParts, Ser
         const std::string& channelName = *it;
         if (!srv->hasChannel(channelName))
         {
+            std::cout << "Channel not found: " << channelName << std::endl;
+
             client->sendReply(ERR_NOSUCHCHANNEL(client->getNickname(), channelName));
             continue;
         }

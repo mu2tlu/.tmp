@@ -343,8 +343,6 @@ void Server::botConnect() //BOT
     }
     catch (const std::exception &e)
     {
-        delete _bot;
-        _bot = NULL;
         write(STDOUT_FILENO, e.what(), strlen(e.what()));
     }
 

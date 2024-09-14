@@ -36,7 +36,7 @@ Channel* Server::getChannel(const std::string& channelName)
         std::cout << "Channel found: " << channelName << std::endl;
         return it->second;
     }
-    std::cout << "Channel not found: " << channelName << std::endl;
+    
     return NULL;
 }
 
