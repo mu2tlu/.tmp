@@ -66,6 +66,7 @@ bool Server::sendMessage(int clientSocket, const std::string& msg) {
 
 std::string Server::receiveMessage(int clientSocket){
     char buffer[BUFFER_SIZE];
+	memset(buffer, 0, BUFFER_SIZE);
     std::string message;
     ssize_t bytesRead ;
 

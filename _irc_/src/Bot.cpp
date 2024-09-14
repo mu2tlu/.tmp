@@ -86,7 +86,8 @@ void Bot::listen()
 }
 
 std::string censorMessage(const std::string& message, const std::string blacklist[], int blacklistSize) {
-    std::string censoredMessage = message;
+    
+	std::string censoredMessage = message;
     for (int i = 0; i < blacklistSize; ++i) {
         size_t pos = 0;
         std::string replacement(blacklist[i].length(), '*');
@@ -99,36 +100,44 @@ std::string censorMessage(const std::string& message, const std::string blacklis
 }
 
 
-std::string Bot::processMessage(const std::string &msg)
+std::string Bot::processMessage(const std::string &message)
 {
-    if (!msg.empty())
-{
-    std::string senderNick = msg.substr(0, msg.find("!"));
-    if (msg.find("Bot") != std::string::npos)
-        sendMsg(senderNick, "Hello " + senderNick + "!");
-    if (msg.find("time") != std::string::npos || msg.find("date") != std::string::npos)
-    {
-        time_t rawtime;
-        struct tm *timeinfo;
-        time(&rawtime);
-        timeinfo = localtime(&rawtime);
-        sendMsg(senderNick, asctime(timeinfo));
-    }
-    std::string blacklist[] = {"uglyasf", "screw", "dumb", "stupid", "idiot", "amk"};
-    int blacklistSize = sizeof(blacklist) / sizeof(blacklist[0]);
-    std::string censoredMsg = censorMessage(msg, blacklist, blacklistSize);
-    if (censoredMsg != msg)
-    {
-        sendMsg(senderNick, "Please be more respectful!");
-        return censoredMsg;
-    }
-}
+	std::string senderNick, msg;
+	
+    if (!message.empty())
+	{
+    	senderNick = message.substr(0, message.find("!"));
+    	msg = message.substr(message.find("!") + 1);
+
+    	if (msg.find("Bot") != std::string::npos) {
+        	sendMsg(senderNick, "Hello " + senderNick + "!");
+		}
+
+		if (msg.find("time") != std::string::npos || msg.find("date") != std::string::npos)
+		{
+			time_t rawtime;
+			struct tm *timeinfo;
+			time(&rawtime);
+			timeinfo = localtime(&rawtime);
+			sendMsg(senderNick, asctime(timeinfo));
+		}
+		
+		std::string blacklist[] = {"uglyasf", "screw", "dumb", "stupid", "idiot", "amk"};
+		int blacklistSize = sizeof(blacklist) / sizeof(blacklist[0]);
+
+		std::string censoredMsg = censorMessage(msg, blacklist, blacklistSize);
+		if (censoredMsg != msg)
+		{
+			sendMsg(senderNick, "Please be more respectful!");
+			return censoredMsg;
+		}
+	}
 	return msg;
 }
 
-void Bot::sendMsg(const std::string &channel, const std::string &message)
+void Bot::sendMsg(const std::string &nick, const std::string &message)
 {
-	std::string fullMessage = "PRIVMSG " + channel + " :" + message + "\r\n";
+	std::string fullMessage = "PRIVMSG " + nick + " :" + message + "\r\n";
 	send(sock, fullMessage.c_str(), fullMessage.length(), 0);
 }
 
@@ -141,7 +150,6 @@ int Bot::getSocket() const
 {
 	return sock;
 }
-
 
 void Bot::sendWelMsg(Client* client)
 {

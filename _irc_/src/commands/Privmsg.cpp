@@ -34,9 +34,8 @@ void Privmsg::privmsg(Client *client, const std::vector<std::string> commandPart
         if (targetClient == NULL)
             return (client->sendMessage(ERR_NOSUCHNICK(client->getPrefix(), commandParts.at(1))));
         else
-            targetClient->sendMessage(":" + client->getNickname() + " PRIVMSG " + commandParts.at(1) + " : " + message);
+            targetClient->sendMessage(":" + client->getNickname() + " PRIVMSG " + commandParts.at(1) + " :" + message);
     }
-
     else if (srv->getChannel(commandParts.at(1)))
     {
         Channel *chan = srv->getChannel(commandParts.at(1));

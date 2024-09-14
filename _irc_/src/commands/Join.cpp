@@ -57,6 +57,4 @@ void Join::join(Client *client, const std::vector<std::string> commandParts, Ser
     std::string channel = commandParts.at(1);
     if (!channel.empty())
         joinChannel(client, channel, commandParts, srv);
-
-
 }
