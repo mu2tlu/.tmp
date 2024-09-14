@@ -102,8 +102,10 @@ void Channel::sendChannelUserList(Client *client)
     if (!nickList.empty())
         nickList = nickList.substr(0, nickList.length() - 1);
         
-    broadcastMessage(RPL_NAMREPLY(client->getNickname(), getChannelName(), nickList));
-    broadcastMessage(RPL_ENDOFNAMES(client->getNickname(), getChannelName()));
+    if(getChannelName() != "") {
+        broadcastMessage(RPL_NAMREPLY(client->getNickname(), getChannelName(), nickList));
+        broadcastMessage(RPL_ENDOFNAMES(client->getNickname(), getChannelName()));
+    }
 }
 
 void Channel::removeClientFromChannel(Client* client, Server* srv)

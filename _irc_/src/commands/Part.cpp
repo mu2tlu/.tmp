@@ -37,6 +37,7 @@ void Part::part(Client *client, const std::vector<std::string> commandParts, Ser
             client->sendReply(ERR_NOSUCHCHANNEL(client->getNickname(), channelName));
             continue;
         }
+
         Channel* channel = srv->getChannel(channelName);
         if (!channel)
             continue;
@@ -45,8 +46,9 @@ void Part::part(Client *client, const std::vector<std::string> commandParts, Ser
         {
             client->sendReply(RPL_PART(client->getPrefix(), channel->getChannelName(), message));
             channel->broadcastMessage(RPL_PART(client->getPrefix(), channel->getChannelName(), message));
-            channel->sendChannelUserList(client);
             channel->removeClientFromChannel(client,srv);
+            if(srv->getChannel(channelName) != NULL)
+            channel->sendChannelUserList(client);
         }
         else
             client->sendReply(ERR_NOTONCHANNEL(client->getNickname(), channelName));

@@ -8,6 +8,7 @@
 
 class Server;
 class Client;
+
 class Channel
 {
 private:
